@@ -1,0 +1,25 @@
+灵鉴三端与后端联通说明（简要）
+==========================
+
+端口约定（开发环境 Vite 代理到同一后端）：
+- 用户端   fake-science-identify-user   3000
+- 管理端   fake-science-identify-admin  3001
+- 专业审核端 fake-science-identify-audit  3002
+- 后端 API  127.0.0.1:8000  统一前缀  /api/v1
+
+三端已统一：axios baseURL=/api/v1，Vite 将 /api 代理到 8000 且不再错误 strip 路径（与灵鉴 FastAPI 一致）。
+
+鉴权：三端均走同一套  POST /api/v1/auth/login  与  GET /api/v1/users/me；令牌保存在各自域名端口下的 localStorage。
+
+RBAC 提示：
+- 管理端统计等需要角色权限包含 admin:stats（内置 admin 角色含全部权限）。
+- 审核端队列 / 审核动作需要 review:read、review:write（内置 reviewer 角色）；请在库里为用户挂上 reviewer 角色后再登录审核端。
+
+已对接的后端能力摘要：
+- 审核队列 GET /review/queue（列表字段含 content_id、风险、预览等）
+- 审核详情 GET /review/item/{public_id}
+- 审核提交 POST /review/action  body: { public_id, action: approve|reject }
+- 管理统计 GET /admin/stats/overview、/admin/stats/risk_buckets
+
+仍为占位、尚未对接真实接口的页面（请求会失败属预期）：
+- 管理端：用户管理、模型/提示词配置、系统配置、批量导入 Excel 等「原 Mock 路径」。

@@ -1,0 +1,76 @@
+# 灵鉴后端 docker-compose（开发/集成环境示例）
+# 用法：在项目根目录执行 `docker compose up --build`
+# 首次启动 MySQL 后需等待数据库就绪，再访问 API。
+
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: lingjian
+      MYSQL_DATABASE: lingjian
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      LINGJIAN_DATABASE_URL: mysql+pymysql://root:lingjian@mysql:3306/lingjian?charset=utf8mb4
+      LINGJIAN_REDIS_URL: redis://redis:6379/0
+      LINGJIAN_REDIS_CACHE_URL: redis://redis:6379/1
+      LINGJIAN_CELERY_BROKER: redis://redis:6379/0
+      LINGJIAN_CELERY_RESULT: redis://redis:6379/0
+      LINGJIAN_ELASTICSEARCH_URL: http://elasticsearch:9200
+      LINGJIAN_JWT_SECRET: change-me-use-long-random-in-production
+    depends_on:
+      - mysql
+      - redis
+      - elasticsearch
+
+  worker:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: >
+      celery -A backend.app.celery_app worker --loglevel=info --pool=solo
+    environment:
+      LINGJIAN_DATABASE_URL: mysql+pymysql://root:lingjian@mysql:3306/lingjian?charset=utf8mb4
+      LINGJIAN_REDIS_URL: redis://redis:6379/0
+      LINGJIAN_REDIS_CACHE_URL: redis://redis:6379/1
+      LINGJIAN_CELERY_BROKER: redis://redis:6379/0
+      LINGJIAN_CELERY_RESULT: redis://redis:6379/0
+      LINGJIAN_ELASTICSEARCH_URL: http://elasticsearch:9200
+      LINGJIAN_JWT_SECRET: change-me-use-long-random-in-production
+    depends_on:
+      - mysql
+      - redis
+      - elasticsearch
+
+volumes:
+  mysql_data:
+  es_data:
+  redis_data:

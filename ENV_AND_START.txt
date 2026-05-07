@@ -1,0 +1,142 @@
+灵鉴 · 环境与启动说明（本地开发）
+================================
+
+一、前置条件
+------------
+· Python 3.12（仓库建议版本，见 backend/runtime.txt / .python-version）
+· Node.js 18+（用于三个 Vue 前端）
+· （可选）Redis：推理缓存 / Session；不配也可跑，缓存相关降级
+· （可选）MySQL：不设则默认 SQLite → backend/data/lingjian.db
+
+
+二、安装后端依赖
+----------------
+在项目根目录：
+
+  py -3.12 -m pip install -r requirement.txt
+
+（与 backend/requirements.txt 内容一致；任选其一安装亦可：
+
+  py -3.12 -m pip install -r backend/requirements.txt
+
+）
+
+· 启用 Qwen 时：须与「启动 uvicorn 的 Python」为同一解释器；transformers 需 <4.57（与 transformers_stream_generator 兼容）。
+  自检：  py -3.12 你的仓库根\backend\scripts\check_llm_env.py
+
+可选 · OCR/图片识别额外依赖（体积大）：
+
+  py -3.12 -m pip install -r backend/requirements-model.txt
+
+
+三、常用环境变量（可选，不配则用默认值）
+----------------------------------------
+在启动 uvicorn 前用 PowerShell 设置，例如：
+
+  $env:LINGJIAN_ENABLE_LLM="0"
+
+名称                         说明
+----------------------------------------------------------------------
+LINGJIAN_API_PREFIX          默认 /api/v1，一般不改
+LINGJIAN_DATABASE_URL        默认 SQLite；生产可改为 mysql+pymysql://...
+LINGJIAN_REDIS_URL           默认 redis://127.0.0.1:6379/0
+LINGJIAN_REDIS_CACHE_URL     推理缓存库，默认 redis://127.0.0.1:6379/1
+LINGJIAN_ENABLE_LLM          1 启用本地 Qwen；0 走启发式（省资源）
+LINGJIAN_LLM_MODEL           模型路径或 HuggingFace 名
+LINGJIAN_BOOTSTRAP_ADMIN     库中无任何用户时，首个管理员用户名（须与密码成对）
+LINGJIAN_BOOTSTRAP_PASSWORD  与上一项同时设置才创建首个用户（角色 admin）
+LINGJIAN_INFER_CACHE_VERSION  推理缓存版本串；改协议/逻辑后 bump 可避免旧缓存
+LINGJIAN_JWT_SECRET           生产务必改为长随机串
+
+
+四、启动后端（建议最先启动）
+----------------------------
+在项目根目录执行（路径按你本机修改）：
+
+  cd d:\codexproject
+  $env:PYTHONPATH="d:\codexproject"
+  py -3.12 -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000
+
+验证：
+
+  浏览器打开 http://127.0.0.1:8000/docs
+  或访问 http://127.0.0.1:8000/health
+
+说明：首次启动会执行 alembic、RBAC 种子数据；若配置了 LINGJIAN_BOOTSTRAP_ADMIN 与
+LINGJIAN_BOOTSTRAP_PASSWORD 且库中尚无用户，会创建首个管理员账号。
+
+
+五、启动三个前端（各开一个终端）
+--------------------------------
+各目录首次需 npm install，之后：
+
+  用户端（识别前台）
+    cd d:\codexproject\fake-science-identify-user
+    npm run dev
+    → http://127.0.0.1:3000
+
+  管理端
+    cd d:\codexproject\fake-science-identify-admin
+    npm run dev
+    → http://127.0.0.1:3001
+
+  专业审核端
+    cd d:\codexproject\fake-science-identify-audit
+    npm run dev
+    → http://127.0.0.1:3002
+
+三个前端的 Vite 已将 /api 代理到 http://127.0.0.1:8000，axios baseURL 为 /api/v1。
+后端必须先运行在 8000 端口，前端页面里的接口才会通。
+
+
+六、Redis（可选）
+----------------
+本机 Redis 默认 6379 时后端会自动连接；未运行 Redis 时缓存客户端为空，核心接口仍可用。
+若推理结果「像旧的」，可提高 LINGJIAN_INFER_CACHE_VERSION 或清理缓存库。
+
+
+七、Docker Compose（可选）
+-------------------------
+docker-compose.yml 可一键起 mysql、redis、elasticsearch 与 api。
+本地日常开发多数情况只需：本机 Python 起后端 + 三个 npm run dev。
+
+
+八、角色提示
+------------
+管理端需要 admin 权限；审核端需要 reviewer 角色权限。
+详见项目根目录 CONNECTIVITY.txt。
+
+
+九、局域网启动（同网段访问）
+--------------------------
+若需让同一局域网内其它电脑访问本机部署，可在项目根目录执行：
+
+  pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\start-lan.ps1
+
+若需同时启用训练后的 LoRA：
+
+  pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\start-lan-with-trained-llm.ps1
+
+说明：
+
+· 后端会监听 0.0.0.0:8000
+· 门户 / 用户端 / 管理端 / 审核端会监听 0.0.0.0:3080 / 3000 / 3001 / 3002
+· 启动脚本会自动识别本机 IPv4，并生成 fake-science-identify-all\.env.development.local，
+  使门户跳转到当前主机的局域网地址
+
+示例（假设本机 IP 为 192.168.1.88）：
+
+  门户        http://192.168.1.88:3080
+  用户端      http://192.168.1.88:3000
+  管理端      http://192.168.1.88:3001
+  审核端      http://192.168.1.88:3002
+  后端文档    http://192.168.1.88:8000/docs
+
+若自动识别 IP 不准确，可手动指定：
+
+  pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\start-lan.ps1 -HostIp 192.168.1.88
+
+注意：
+
+· 首次启动时 Windows 防火墙可能弹窗，请允许 Python / Node.js 在专用网络中通信
+· 同网段机器需能访问本机 8000、3000、3001、3002、3080 端口

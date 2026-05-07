@@ -1,0 +1,141 @@
+{
+  "n": 10,
+  "zero_pred_count": 92,
+  "picked_count": 10,
+  "checkpoint": "D:\\project\\CHEF-main\\Bert\\bert_chinese_multilabel_out\\best",
+  "ocr_root": "D:\\project\\CHEF-main\\Bert\\data\\ocr_paddleocr_import",
+  "threshold": 0.0,
+  "from_mismatch": "data/ocr_bert_mismatch_weak_label.txt",
+  "rows": [
+    {
+      "idx": 17,
+      "total_score_pct": 17.0,
+      "pred": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": "经常喝咖啡会导致贫血？"
+    },
+    {
+      "idx": 24,
+      "total_score_pct": 22.6,
+      "pred": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": "有人因食用泡发木耳导致中毒甚至死亡，说明木耳可能有毒"
+    },
+    {
+      "idx": 56,
+      "total_score_pct": 24.5,
+      "pred": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": "大米越精细营养越少！"
+    },
+    {
+      "idx": 67,
+      "total_score_pct": 27.4,
+      "pred": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": "味精是化工产品，对人体有害？"
+    },
+    {
+      "idx": 81,
+      "total_score_pct": 38.4,
+      "pred": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": "葡萄颜色越深抗氧化物质越多！"
+    },
+    {
+      "idx": 112,
+      "total_score_pct": 24.3,
+      "pred": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": "鱼肉比猪肉更健康"
+    },
+    {
+      "idx": 138,
+      "total_score_pct": 37.3,
+      "pred": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": "没有咸味的食物就不含\"盐\""
+    },
+    {
+      "idx": 143,
+      "total_score_pct": 24.7,
+      "pred": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": "過度追求睡夠八小時，反而增加死亡風險"
+    },
+    {
+      "idx": 176,
+      "total_score_pct": 38.8,
+      "pred": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": "车厘子核仁吃了会中毒？"
+    },
+    {
+      "idx": 208,
+      "total_score_pct": 23.7,
+      "pred": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "text": "反季节蔬菜使用农药过多，有害健康？"
+    }
+  ]
+}

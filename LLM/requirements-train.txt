@@ -1,0 +1,10 @@
+# Qwen2.5 / LoRA 训练：与根目录 requirement.txt 推理栈尽量一致
+torch>=2.1.0
+transformers==4.38.2
+accelerate>=0.26.0,<0.34.0
+peft==0.10.0
+transformers_stream_generator==0.0.4
+datasets>=2.16.0
+tqdm>=4.66.0
+safetensors>=0.4.0
+einops>=0.7.0

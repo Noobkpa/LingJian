@@ -1,0 +1,6 @@
+.deps/
+.pip_tmp/
+uploads/
+data/backups/
+__pycache__/
+*.pyc

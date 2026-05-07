@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>灵鉴 · 文本试跑（Qwen）</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 24px auto; padding: 0 16px; color: #1a1a1a; }
+    h1 { font-size: 1.1rem; font-weight: 600; }
+    .tip { background: #fff8e6; border: 1px solid #e6d08b; padding: 10px 12px; border-radius: 6px; font-size: 13px; margin: 12px 0; }
+    label { display: block; margin-top: 12px; font-size: 13px; color: #444; }
+    input, textarea, button { width: 100%; margin-top: 4px; padding: 8px 10px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; }
+    textarea { min-height: 120px; resize: vertical; }
+    button { background: #1e5a8c; color: #fff; border: none; cursor: pointer; margin-top: 16px; font-weight: 500; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    pre { background: #f4f4f4; padding: 12px; border-radius: 6px; overflow: auto; font-size: 12px; line-height: 1.4; max-height: 480px; }
+    .out-line { margin-top: 8px; font-size: 15px; }
+    .err { color: #b00020; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>文本研判试跑</h1>
+  <p class="tip">
+    仅用于看效果：登录 → 调 <code>/api/v1/analyze/text</code>。<strong>要真 Qwen 参与</strong>请用环境变量启动后端：<code>LINGJIAN_ENABLE_LLM=1</code>；
+    首次加载大模型可能需<strong>十几分钟</strong>，请勿关闭页面。
+  </p>
+
+  <label>后端根地址（留空则用当前页面同源）</label>
+  <input id="apiBase" type="text" placeholder="例 http://127.0.0.1:8000" />
+
+  <label>用户名</label>
+  <input id="user" type="text" value="webdemo" />
+
+  <label>密码</label>
+  <input id="pass" type="password" value="webdemo123456" />
+
+  <label>待分析文本</label>
+  <textarea id="text" placeholder="输入一段待检测中文…">这款保健品能彻底根治癌症，三天见效。权威专家推荐。</textarea>
+
+  <button id="go" type="button">开始分析（含 Qwen 时请耐心等待）</button>
+
+  <div id="status" class="out-line"></div>
+  <div id="summary" class="out-line"></div>
+  <div id="standardBox" style="display:none; margin-top:16px;">
+    <h2 style="font-size:1rem;">标准研判 JSON（standard_judgment）</h2>
+    <pre id="stdOut"></pre>
+  </div>
+  <div id="err" class="err"></div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const apiRoot = () => {
+      const b = $("apiBase").value.trim();
+      return b || window.location.origin;
+    };
+    const apiV1 = () => apiRoot() + "/api/v1";
+
+    async function getToken() {
+      const u = $("user").value.trim();
+      const p = $("pass").value;
+      const base = apiV1();
+      const reg = await fetch(base + "/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: u, password: p }),
+      });
+      if (!reg.ok && reg.status !== 409) {
+        const t = await reg.text();
+        throw new Error("注册失败 " + reg.status + "\n" + t);
+      }
+      const login = await fetch(base + "/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: u, password: p }),
+      });
+      if (!login.ok) {
+        const t = await login.text();
+        throw new Error("登录失败 " + login.status + "\n" + t);
+      }
+      const j = await login.json();
+      return j.access_token;
+    }
+
+    $("go").onclick = async () => {
+      $("err").textContent = "";
+      $("out").style.display = "none";
+      $("summary").textContent = "";
+      $("standardBox").style.display = "none";
+      const btn = $("go");
+      btn.disabled = true;
+      $("status").textContent = "正在登录…";
+      try {
+        const token = await getToken();
+        $("status").textContent = "正在分析（若启用 Qwen，首次可能很慢）…";
+        const controller = new AbortController();
+        const kill = setTimeout(() => controller.abort(), 45 * 60 * 1000);
+        const text = $("text").value.trim();
+        if (!text) throw new Error("请先输入文本");
+        const res = await fetch(apiV1() + "/analyze/text", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token,
+          },
+          body: JSON.stringify({ text, content_id: "web-" + Date.now() }),
+          signal: controller.signal,
+        });
+        clearTimeout(kill);
+        const raw = await res.text();
+        if (!res.ok) throw new Error(res.status + "\n" + raw);
+        const data = JSON.parse(raw);
+        $("status").textContent = "完成。";
+        const sj = data.standard_judgment;
+        if (sj) {
+          $("standardBox").style.display = "block";
+          $("stdOut").textContent = JSON.stringify(sj, null, 2);
+        } else {
+          $("standardBox").style.display = "none";
+        }
+        const llmOk = data.llm && data.llm.available && !(data.llm.raw_output || "").includes("heuristic_llm");
+        $("summary").innerHTML =
+          (sj
+            ? "<strong>标准 risk</strong>：" +
+              sj.risk_level +
+              " · 分 " +
+              sj.comprehensive_score +
+              " · <code>infer_time</code> " +
+              sj.infer_time +
+              "<br/>"
+            : "") +
+          "<strong>final</strong>：" +
+          (data.final && data.final.risk_level) +
+          " · 分 " +
+          (data.final && data.final.score) +
+          "<br/><small>LLM 是否像真实生成：" +
+          (llmOk ? "是（raw 非 heuristic 标记）" : "可能为启发式（请确认后端 LINGJIAN_ENABLE_LLM=1）") +
+          "</small>";
+        $("out").textContent = JSON.stringify(data, null, 2);
+        $("out").style.display = "block";
+      } catch (e) {
+        $("status").textContent = "";
+        $("err").textContent = e.name === "AbortError" ? "请求超时（已等 45 分钟）。" : String(e.message || e);
+      } finally {
+        btn.disabled = false;
+      }
+    };
+  </script>
+</body>
+</html>

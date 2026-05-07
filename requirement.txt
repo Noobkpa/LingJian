@@ -1,0 +1,87 @@
+# =============================================================================
+# 灵鉴 LingJian — Python 依赖（仓库根目录执行：pip install -r requirement.txt）
+# 与 backend/requirements.txt 一致：后者通过 -r ../requirement.txt 引用本文件。
+# =============================================================================
+#
+# 【运行环境】
+# - Python：3.10～3.12（推荐 3.12，见 .python-version、backend/runtime.txt）。勿用 3.13+ 跑本后端。
+# - 操作系统：后端跨平台；其中 PaddleOCR / paddlepaddle 以 Windows 预编译轮为主，Linux/macOS 请查
+#   https://www.paddlepaddle.org.cn/ 按官方说明安装（版本可与下列不完全一致时需自行调整）。
+# - PyTorch：若用 NVIDIA GPU，强烈建议先从 https://pytorch.org/ 安装与 CUDA 匹配的 torch，再装本文件，
+#   以免 pip 默认 CPU 版与显卡/驱动不匹配。
+# - 非 Python：三端前端需 Node.js 18+ 与 npm；一键脚本见 scripts/（推荐 PowerShell 7 / pwsh）。
+#
+# 【外部服务】（不配则部分功能降级或报错，见 backend/env.example）
+# - Redis：缓存、Celery broker（默认 redis://127.0.0.1:6379/0）
+# - MySQL：生产库（默认开发为 SQLite，无需额外驱动）
+# - Elasticsearch：可选；不配 LINGJIAN_ELASTICSEARCH_URL 则搜索相关不连 ES
+#
+# 【仅文本 / 不跑 OCR】可自行注释掉下方「OCR / Paddle」整段。
+# 【仅 CPU、不跑 8bit 量化】若 bitsandbytes 安装失败，可注释该行，并在环境变量中将 LINGJIAN_LLM_QUANTIZATION 设为 16bit（见 backend/README.md）。
+#
+# =============================================================================
+
+# --- Web 与数据 ---
+fastapi>=0.110.0
+uvicorn[standard]>=0.27.0
+python-multipart>=0.0.9
+pydantic>=2.6.0
+pydantic-settings>=2.2.0
+
+# Auth: JWT + bcrypt
+PyJWT>=2.8.0
+bcrypt>=4.1.0
+
+# Rate limit
+slowapi>=0.1.9
+
+# Database
+SQLAlchemy>=2.0.25
+greenlet>=3.0.0
+alembic>=1.13.0
+pymysql>=1.1.0
+
+# Excel import (admin)
+openpyxl>=3.1.0
+
+# Redis and Celery
+redis>=5.0.0
+celery[redis]>=5.3.0
+
+# Elasticsearch（客户端；不配 URL 则不连接）
+elasticsearch>=8.12.0,<9
+
+# --- 数值与 BERT 推理辅助 ---
+numpy>=1.23.5,<3
+tqdm>=4.65.0
+
+# HuggingFace / 权重加载常用传递依赖（显式写出便于离线校验与版本锁定）
+huggingface_hub>=0.21.0
+safetensors>=0.4.1
+PyYAML>=6.0.1
+packaging>=23.2
+protobuf>=4.25.0
+
+# --- 本地 LLM（Qwen / Transformers）；GPU 建议先从 pytorch.org 安装匹配的 torch ---
+tiktoken>=0.7.0
+torch>=2.2.0
+# transformers 4.57+ 移除 BeamSearchScorer，与 transformers_stream_generator / 部分 Qwen 建模不兼容
+transformers>=4.38.0,<4.57
+accelerate>=0.27.0
+einops>=0.7.0
+transformers_stream_generator>=0.0.4
+peft>=0.8.0
+bitsandbytes>=0.43.0
+sentencepiece>=0.2.0
+
+# --- OCR / 图文混合（PaddleOCR）；Windows 细节见 backend/README.md ---
+opencv-python>=4.8.0
+pillow>=10.0.0
+paddlepaddle==3.0.0
+paddleocr>=3.0.0
+
+# =============================================================================
+# 可选：其它数据库（默认不用；改用对应 LINGJIAN_DATABASE_URL 时再取消注释安装）
+# =============================================================================
+# PostgreSQL（SQLAlchemy 2 + psycopg3）:
+#   psycopg[binary]>=3.1.0

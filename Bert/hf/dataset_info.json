@@ -1,0 +1,30 @@
+{
+  "format": "jsonl",
+  "fields": [
+    "id",
+    "text",
+    "labels",
+    "weight"
+  ],
+  "weight_rule": {
+    "positive_single": 1.1,
+    "positive_double": 1.2,
+    "positive_multi": 1.35,
+    "hard_negative": 1.2,
+    "normal_negative": 1.0
+  },
+  "splits": {
+    "train": {
+      "count": 673,
+      "avg_weight": 1.175
+    },
+    "val": {
+      "count": 50,
+      "avg_weight": 1.153
+    },
+    "test": {
+      "count": 50,
+      "avg_weight": 1.177
+    }
+  }
+}

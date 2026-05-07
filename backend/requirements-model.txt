@@ -1,0 +1,22 @@
+# 已合并到仓库根目录的 requirement.txt（含 numpy、OCR、Paddle、LLM 等）。
+# 请优先在仓库根执行：  pip install -r requirement.txt
+#
+# 若你按 README 需要「先单独装 CUDA 版 torch，再装其余、避免被 pip 覆盖」，
+# 可在此文件基础上自行删去与已装环境重复的行，或只补装缺项（如仅缺 paddle 时
+#   pip install paddlepaddle==3.0.0 paddleocr>=3.0.0 opencv-python pillow
+# ）。
+
+numpy>=1.23.5,<3
+torch>=2.0.0
+transformers>=4.36.0
+accelerate>=0.25.0
+tqdm>=4.65.0
+pillow>=10.0.0
+opencv-python>=4.8.0
+paddleocr>=3.0.0
+paddlepaddle==3.0.0
+
+# FlashAttention：PyPI 无 Windows 轮子；需与 Python / PyTorch / CUDA 对齐。
+# 本机 py312 + cu126 + torch2.11 示例（社区预编译）：
+# pip install "https://github.com/mjun0812/flash-attention-prebuild-wheels/releases/download/v0.9.6/flash_attn-2.8.3+cu126torch2.11-cp312-cp312-win_amd64.whl"
+# 其他组合见 https://github.com/mjun0812/flash-attention-prebuild-wheels/releases

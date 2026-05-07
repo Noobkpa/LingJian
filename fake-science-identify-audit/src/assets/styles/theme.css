@@ -1,0 +1,19 @@
+/* Element Plus 审核端主题定制 */
+:root {
+  --el-color-primary: #409eff;
+  --el-color-success: #67c23a;
+  --el-color-warning: #e6a23c;
+  --el-color-danger: #f56c6c;
+  --el-border-radius-base: 6px;
+}
+
+/* 按钮样式重写 */
+.el-button--primary {
+  --el-button-bg-color: var(--el-color-primary);
+  --el-button-border-color: var(--el-color-primary);
+}
+
+/* 侧边栏菜单样式 */
+.el-menu-vertical-demo {
+  border-right: none;
+}

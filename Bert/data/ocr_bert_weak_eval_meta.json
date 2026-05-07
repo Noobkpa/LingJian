@@ -1,0 +1,17 @@
+{
+  "ocr_root": "C:\\Users\\28079\\AppData\\Local\\Temp\\BNZ.69f2b2034ca759d1\\OCR\\paddleocr_format",
+  "checkpoint": "D:\\project\\CHEF-main\\Bert\\bert_chinese_multilabel_out\\best",
+  "threshold": 0.0,
+  "gold": [
+    0,
+    1,
+    1,
+    0,
+    0,
+    0
+  ],
+  "unique_texts": 273,
+  "match_count": 69,
+  "mismatch_count": 204,
+  "match_rate": 0.2527
+}

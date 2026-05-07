@@ -1,0 +1,32 @@
+【说明】
+1) pred 指 BERT 六维二值预测（阈值见 thresholds.json / 默认 0）；全 0 表示六类话术均未过阈。
+2) 「非谣言」在此 = 命中 TRUTH_RULES 子串的候选（营养/毒理可核对、问号议题等），非医学结论；带「？」的常为误区/辟谣类标题，未必整句为真。
+3) pred/score 来源（缓存）: D:\project\CHEF-main\Bert\data\ocr_bert_mismatch_weak_label.txt
+4) checkpoint（弱评估脚本默认）: D:\project\CHEF-main\Bert\bert_chinese_multilabel_out\best
+5) OCR 去重顺序参考: D:\project\CHEF-main\Bert\data\ocr_paddleocr_import
+6) 本批 pred 全 0 条数（来源内）: 92；取规则命中按 idx 升序前 10 条。
+
+TRUTH_RULES (正则子串):
+  - 大米越精细
+  - 葡萄颜色越深
+  - 车厘子核仁
+  - 鱼肉比猪肉
+  - 泡发木耳
+  - 睡夠八小時
+  - 睡够八小时
+  - 反季节蔬菜
+  - 咖啡.*贫血
+  - 没有咸味
+  - 味精.*化工
+
+=== 十条（score = total_score_pct）===
+17	score=17.0	pred=[0, 0, 0, 0, 0, 0]	经常喝咖啡会导致贫血？
+24	score=22.6	pred=[0, 0, 0, 0, 0, 0]	有人因食用泡发木耳导致中毒甚至死亡，说明木耳可能有毒
+56	score=24.5	pred=[0, 0, 0, 0, 0, 0]	大米越精细营养越少！
+67	score=27.4	pred=[0, 0, 0, 0, 0, 0]	味精是化工产品，对人体有害？
+81	score=38.4	pred=[0, 0, 0, 0, 0, 0]	葡萄颜色越深抗氧化物质越多！
+112	score=24.3	pred=[0, 0, 0, 0, 0, 0]	鱼肉比猪肉更健康
+138	score=37.3	pred=[0, 0, 0, 0, 0, 0]	没有咸味的食物就不含"盐"
+143	score=24.7	pred=[0, 0, 0, 0, 0, 0]	過度追求睡夠八小時，反而增加死亡風險
+176	score=38.8	pred=[0, 0, 0, 0, 0, 0]	车厘子核仁吃了会中毒？
+208	score=23.7	pred=[0, 0, 0, 0, 0, 0]	反季节蔬菜使用农药过多，有害健康？

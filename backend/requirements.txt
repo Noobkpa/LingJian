@@ -1,0 +1,5 @@
+# 与仓库根目录 requirement.txt 保持单一来源：请勿在本文件单独增删包。
+# 安装请始终在仓库根执行： pip install -r requirement.txt
+#
+# 以下兼容旧文档 / IDE 指向 backend/requirements.txt：
+-r ../requirement.txt

@@ -1,0 +1,31 @@
+{
+  "dataset_name": "bert_multilabel_dataset",
+  "version": "1.0",
+  "total_samples": 500,
+  "splits": {
+    "train": 400,
+    "val": 50,
+    "test": 50
+  },
+  "format": "BERT multi-label TSV (text<TAB>[l1,l2,l3,l4,l5,l6])",
+  "label_order": [
+    "绝对化用语",
+    "术语堆砌",
+    "虚假疗效",
+    "标点异常",
+    "数据篡改",
+    "权威伪造"
+  ],
+  "statistics": {
+    "all_zero_samples": 200,
+    "non_zero_samples": 300,
+    "positive_counts_per_label": {
+      "绝对化用语": 69,
+      "术语堆砌": 149,
+      "虚假疗效": 175,
+      "标点异常": 108,
+      "数据篡改": 112,
+      "权威伪造": 150
+    }
+  }
+}
