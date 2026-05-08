@@ -3,6 +3,7 @@
  * 路径与 backend/app/api/v1 下各 router 的 prefix + 装饰路径一致。
  */
 export const V1 = {
+  AUTH_CAPTCHA: '/auth/captcha',
   AUTH_LOGIN: '/auth/login',
   AUTH_REGISTER: '/auth/register',
   AUTH_REFRESH: '/auth/refresh',
@@ -44,6 +45,7 @@ export const V1 = {
 
 /** 登录、注册、刷新：请求体自带凭证，不应附带过期 access Bearer */
 export const AUTH_BODY_ONLY_PATHS = [
+  V1.AUTH_CAPTCHA,
   V1.AUTH_LOGIN,
   V1.AUTH_REGISTER,
   V1.AUTH_REFRESH

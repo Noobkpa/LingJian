@@ -30,12 +30,12 @@
       <!-- 模型配置 -->
       <el-tab-pane label="模型配置" name="model">
         <div class="base-card">
-          <h3 class="card-title">LLM模型配置</h3>
+          <h3 class="card-title">大模型配置</h3>
           <el-form :model="modelForm" label-width="140px" style="max-width: 600px">
             <el-form-item label="当前模型版本">
               <el-select v-model="modelForm.model_version" style="width: 100%">
-                <el-option label="Qwen2.5-3B-Instruct" value="qwen_v2" />
-                <el-option label="Qwen2.5-3B-Instruct（历史选项）" value="qwen_v1" />
+                <el-option label="通义千问 qwen-plus" value="qwen_v2" />
+                <el-option label="本地 Qwen（历史兼容）" value="qwen_v1" />
               </el-select>
             </el-form-item>
             <el-form-item label="生效 Prompt 场景">

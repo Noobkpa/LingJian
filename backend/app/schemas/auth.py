@@ -14,6 +14,15 @@ class RegisterRequest(BaseModel):
 class LoginRequest(BaseModel):
     username: str
     password: str
+    captcha_id: str = Field(..., min_length=8, max_length=80)
+    captcha_code: str = Field(..., min_length=1, max_length=12)
+
+
+class CaptchaResponse(BaseModel):
+    captcha_id: str
+    question: str
+    image: str
+    expires_in: int = 300
 
 
 class TokenPair(BaseModel):

@@ -115,7 +115,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useIdentifyStore } from '@/stores/user/identify'
 import { ElMessageBox, ElMessage } from 'element-plus'
-import EmptyState from '@/components/EmptyState.vue'
+import EmptyState from '@/components/user/EmptyState.vue'
 
 const router = useRouter()
 const identifyStore = useIdentifyStore()

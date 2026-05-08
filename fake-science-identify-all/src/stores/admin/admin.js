@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import request from '@/utils/request'
+import { V1 } from '@/api/v1/endpoints'
 
 export const useAdminStore = defineStore('admin', () => {
   // 状态定义
@@ -11,21 +12,36 @@ export const useAdminStore = defineStore('admin', () => {
   const isLogin = computed(() => !!token.value)
   const adminId = computed(() => adminInfo.value.admin_id || '')
 
-  // 登录方法
   const login = async (loginForm) => {
-    const { data } = await request.post('/admin/login', loginForm)
-    token.value = data.token
-    adminInfo.value = data.adminInfo
-    localStorage.setItem('admin_token', data.token)
-    localStorage.setItem('admin_info', JSON.stringify(data.adminInfo))
-    return data
+    const pair = await request.post(V1.AUTH_LOGIN, {
+      username: loginForm.username,
+      password: loginForm.password,
+      captcha_id: loginForm.captcha_id,
+      captcha_code: loginForm.captcha_code
+    })
+    const p = pair.data
+    token.value = p.access_token
+    localStorage.setItem('admin_token', p.access_token)
+    if (p.refresh_token) {
+      localStorage.setItem('refresh_token', p.refresh_token)
+    }
+    const me = await request.get(V1.USERS_ME)
+    const u = me.data
+    adminInfo.value = {
+      admin_id: u.id,
+      username: u.username,
+      email: u.email || ''
+    }
+    localStorage.setItem('admin_info', JSON.stringify(adminInfo.value))
+    return pair.data
   }
 
-  // 退出登录
   const logout = () => {
     token.value = ''
     adminInfo.value = {}
-    localStorage.clear()
+    localStorage.removeItem('admin_token')
+    localStorage.removeItem('admin_info')
+    localStorage.removeItem('refresh_token')
   }
 
   return {

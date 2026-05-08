@@ -94,7 +94,7 @@ import { ref, reactive, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuditStore } from '@/stores/audit/audit'
 import { ElMessage } from 'element-plus'
-import RiskTag from '@/components/RiskTag.vue'
+import RiskTag from '@/components/audit/RiskTag.vue'
 
 const route = useRoute()
 const router = useRouter()

@@ -55,7 +55,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { useAuditStore } from '@/stores/audit/audit'
-import RiskTag from '@/components/RiskTag.vue'
+import RiskTag from '@/components/audit/RiskTag.vue'
 
 const auditStore = useAuditStore()
 

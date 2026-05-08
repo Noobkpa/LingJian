@@ -41,12 +41,28 @@ LINGJIAN_API_PREFIX          默认 /api/v1，一般不改
 LINGJIAN_DATABASE_URL        默认 SQLite；生产可改为 mysql+pymysql://...
 LINGJIAN_REDIS_URL           默认 redis://127.0.0.1:6379/0
 LINGJIAN_REDIS_CACHE_URL     推理缓存库，默认 redis://127.0.0.1:6379/1
-LINGJIAN_ENABLE_LLM          1 启用本地 Qwen；0 走启发式（省资源）
+LINGJIAN_ENABLE_LLM          1 启用生成模型研判；0 走启发式（省资源）
+LINGJIAN_LLM_PROVIDER        local 本地 Qwen；external 外部 API
 LINGJIAN_LLM_MODEL           模型路径或 HuggingFace 名
+LINGJIAN_EXTERNAL_LLM_BASE_URL 外部 OpenAI-compatible API 基址
+LINGJIAN_EXTERNAL_LLM_API_KEY  外部 API Key
+LINGJIAN_EXTERNAL_LLM_MODEL    外部模型名，如 qwen-plus
+LINGJIAN_EXTERNAL_LLM_MAX_TOKENS 外部 API 生成上限，默认 1024，避免 JSON 被截断
 LINGJIAN_BOOTSTRAP_ADMIN     库中无任何用户时，首个管理员用户名（须与密码成对）
 LINGJIAN_BOOTSTRAP_PASSWORD  与上一项同时设置才创建首个用户（角色 admin）
 LINGJIAN_INFER_CACHE_VERSION  推理缓存版本串；改协议/逻辑后 bump 可避免旧缓存
 LINGJIAN_JWT_SECRET           生产务必改为长随机串
+
+外部 API 示例（适合阿里云 Ubuntu 普通 CPU 服务器）：
+
+  export LINGJIAN_ENABLE_LLM=1
+  export LINGJIAN_LLM_PROVIDER=external
+  export LINGJIAN_EXTERNAL_LLM_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+  export LINGJIAN_EXTERNAL_LLM_API_KEY=你的百炼API_KEY
+  export LINGJIAN_EXTERNAL_LLM_MODEL=qwen-plus
+  export LINGJIAN_EXTERNAL_LLM_MAX_TOKENS=1024
+
+使用 external 后不需要上传 models/qwen/Qwen2.5-3B-Instruct 大模型权重。
 
 
 四、启动后端（建议最先启动）

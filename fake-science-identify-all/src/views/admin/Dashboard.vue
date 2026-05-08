@@ -75,7 +75,7 @@ import { ref, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuditStore } from '@/stores/admin/audit'
 import * as echarts from 'echarts'
-import StatCard from '@/components/StatCard.vue'
+import StatCard from '@/components/admin/StatCard.vue'
 import { DataLine, Warning, User, CircleCheck } from '@element-plus/icons-vue'
 
 const router = useRouter()

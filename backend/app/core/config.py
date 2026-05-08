@@ -44,6 +44,8 @@ class Settings:
         "LINGJIAN_ENABLE_LLM",
         _default_enable_llm_flag(),
     ).lower() in {"1", "true", "yes", "on"}
+    # local：加载仓库内/本机 Qwen 权重；external：调用 OpenAI-compatible Chat Completions API。
+    llm_provider: str = os.getenv("LINGJIAN_LLM_PROVIDER", "local").strip().lower()
     llm_model: str = os.getenv("LINGJIAN_LLM_MODEL", _default_llm_model())
     # 结构化研判 JSON（含多段中文说明）；默认 384 兼顾完整性与耗时；可用 LINGJIAN_LLM_MAX_NEW_TOKENS 覆盖
     llm_max_new_tokens: int = int(os.getenv("LINGJIAN_LLM_MAX_NEW_TOKENS", "384"))
@@ -51,6 +53,17 @@ class Settings:
     llm_adapter_dir: Path | None = (
         Path(_adapter_raw).resolve() if _adapter_raw else None
     )
+    external_llm_base_url: str = os.getenv(
+        "LINGJIAN_EXTERNAL_LLM_BASE_URL",
+        "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    ).strip()
+    external_llm_api_key: str = os.getenv("LINGJIAN_EXTERNAL_LLM_API_KEY", "").strip()
+    external_llm_model: str = os.getenv("LINGJIAN_EXTERNAL_LLM_MODEL", "qwen-plus").strip()
+    external_llm_timeout_sec: float = float(os.getenv("LINGJIAN_EXTERNAL_LLM_TIMEOUT", "120"))
+    external_llm_max_tokens: int = int(os.getenv("LINGJIAN_EXTERNAL_LLM_MAX_TOKENS", "1024"))
+    external_llm_json_mode: bool = os.getenv(
+        "LINGJIAN_EXTERNAL_LLM_JSON_MODE", "0"
+    ).lower() in {"1", "true", "yes", "on"}
 
     # --- 企业级：数据库 / 缓存 / 消息队列 / 搜索 ---
     # 默认 SQLite 便于本地开发；生产请使用 MySQL，例如

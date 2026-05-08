@@ -2,6 +2,7 @@
  * 灵鉴后端前缀 `/api/v1`（axios baseURL 已含此前缀）
  */
 export const V1 = {
+  AUTH_CAPTCHA: '/auth/captcha',
   AUTH_LOGIN: '/auth/login',
   AUTH_REGISTER: '/auth/register',
   AUTH_REFRESH: '/auth/refresh',
@@ -27,6 +28,7 @@ export const V1 = {
 }
 
 export const AUTH_BODY_ONLY_PATHS = [
+  V1.AUTH_CAPTCHA,
   V1.AUTH_LOGIN,
   V1.AUTH_REGISTER,
   V1.AUTH_REFRESH

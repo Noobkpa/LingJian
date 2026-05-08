@@ -34,7 +34,9 @@ export const useUserStore = defineStore('user', () => {
   const login = async (loginForm) => {
     const pair = await request.post(V1.AUTH_LOGIN, {
       username: loginForm.username,
-      password: loginForm.password
+      password: loginForm.password,
+      captcha_id: loginForm.captcha_id,
+      captcha_code: loginForm.captcha_code
     })
     await applySessionFromTokenPair(pair)
     return pair.data

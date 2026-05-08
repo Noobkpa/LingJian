@@ -164,11 +164,16 @@ class LlmService:
 
     @staticmethod
     def _parse_json(raw_output: str) -> dict | None:
+        raw_output = (raw_output or "").strip()
+        if raw_output.startswith("```"):
+            raw_output = re.sub(r"^```(?:json)?\s*", "", raw_output, flags=re.IGNORECASE)
+            raw_output = re.sub(r"\s*```$", "", raw_output)
         match = re.search(r"\{.*\}", raw_output, re.DOTALL)
         if not match:
             return None
         json_str = match.group(0)
-        json_str = re.sub(r'(["\d])\s*;\s*', r"\1, ", json_str)
+        json_str = re.sub(r",\s*([}\]])", r"\1", json_str)
+        json_str = re.sub(r'(["\d}\]])\s*;\s*"', r'\1, "', json_str)
         json_str = json_str.replace("\n", " ").replace("\r", " ")
         try:
             return json.loads(json_str)
@@ -237,6 +242,194 @@ class LlmService:
             "infer_time": infer_time_str,
         }
         return json.dumps(payload, ensure_ascii=False)
+
+    @staticmethod
+    def _build_messages(
+        *,
+        text: str,
+        bert: BertResult,
+        content_id: str,
+        infer_time_str: str,
+        system_prompt: str,
+        preferred_prompt_scene: str | None,
+    ) -> list[dict[str, str]]:
+        scene_eff = (
+            (preferred_prompt_scene or "").strip().lower()
+            or _keyword_topic_scene(text, bert)
+        )
+        scene_block = (
+            f"\n\n【本轮研判场景】{scene_eff}\n"
+            "请据此撰写 scientific_error、why_sound、reader_actions，使其与正文主题一致：\n"
+            "- tech：以国家标准全文公开平台、工信部/市监公开通报、厂商技术文档、CVE/NVD、可重复测评方法或学术论文原文等为主；"
+            "禁止将 reader_actions 写成以「预约门诊、调整处方药、卫健委就诊」为主轴的纯医疗指南。\n"
+            "- medical / health：读者建议可包含卫健、疾控、药监、学会指南与正规医院就诊等路径。\n"
+            "- general：至少一条读者建议须为非医疗类权威求证路径，不得全部为药监门诊话术。\n"
+        )
+        report = bert.model_dump()
+        return [
+            {
+                "role": "system",
+                "content": (
+                    f"{system_prompt}\n\n"
+                    "【硬性格式】只输出一个可被 json.loads 解析的 JSON 对象。"
+                    "不要 Markdown，不要代码围栏，不要解释，不要前后缀。"
+                    "字符串内部如需引用原文，请使用中文引号「」。"
+                ),
+            },
+            {
+                "role": "user",
+                "content": (
+                    "【固定字段】（下列两项必须原样写入 JSON，不得改写）：\n"
+                    f'content_id: "{content_id}"\n'
+                    f'infer_time: "{infer_time_str}"\n\n'
+                    "请根据以下文本和 BERT 检测报告输出最终研判 JSON。\n"
+                    f"【文本】\n{text}\n\n【BERT报告】\n"
+                    f"{json.dumps(report, ensure_ascii=False)}"
+                    f"{scene_block}"
+                ),
+            },
+        ]
+
+    def _result_from_raw(
+        self,
+        *,
+        raw: str,
+        text: str,
+        bert: BertResult,
+        content_id: str,
+        infer_time_str: str,
+    ) -> LlmResult:
+        data = self._parse_json(raw)
+        if not data:
+            return self._fallback(
+                text,
+                bert,
+                "LLM 输出 JSON 解析失败",
+                content_id=content_id,
+                infer_time_str=infer_time_str,
+            )
+        features_list: list[str] = []
+        cf_raw = data.get("core_features")
+        if isinstance(cf_raw, list):
+            features_list = [str(x).strip() for x in cf_raw if str(x).strip()]
+        if not features_list:
+            fe = data.get("features")
+            if isinstance(fe, list):
+                features_list = [str(x).strip() for x in fe if str(x).strip()]
+        features = features_list if features_list else list(bert.predicted_label_names)
+        logical_fallacy = str(data.get("logical_fallacy", "")).strip()
+        scientific_error = str(data.get("scientific_error", "")).strip()
+        judgment_basis = str(data.get("judgment_basis", "")).strip()
+        judgment_basis = re.sub(r"[；;]\s*阈值[:：]\s*[\d.]+\s*", "", judgment_basis)
+        judgment_basis = re.sub(r"\s*阈值[:：]\s*[\d.]+\s*", "", judgment_basis).strip()
+        judgment_basis = _strip_basis_noise_lines(judgment_basis)
+        if not judgment_basis:
+            judgment_basis = (
+                "模型未返回完整判定说明；已结合 BERT 风险档位、命中标签与总分给出结构化结论，"
+                "详见 prediction_summary_zh 与统计得分。"
+            )
+        why_sound = str(data.get("why_sound", "")).strip()
+        why_risky = str(data.get("why_risky", "")).strip()
+        reader_actions = str(data.get("reader_actions", "")).strip()
+        risk_internal = self._normalize_risk_level(data.get("risk_level", "未知"))
+        score_f = self._normalize_score(data.get("comprehensive_score"), bert.total_score_pct)
+        raw_canon = self._canonical_llm_json(
+            content_id=content_id,
+            infer_time_str=infer_time_str,
+            risk_normalized=risk_internal,
+            comprehensive_score=score_f,
+            logical_fallacy=logical_fallacy,
+            scientific_error=scientific_error,
+            core_features=features,
+            judgment_basis=judgment_basis,
+            why_sound=why_sound,
+            why_risky=why_risky,
+            reader_actions=reader_actions,
+        )
+        return LlmResult(
+            risk_level=risk_internal,
+            comprehensive_score=score_f,
+            judgment_basis=judgment_basis,
+            why_sound=why_sound,
+            why_risky=why_risky,
+            reader_actions=reader_actions,
+            features=features,
+            raw_output=raw_canon,
+            logical_fallacy=logical_fallacy,
+            scientific_error=scientific_error,
+        )
+
+    @staticmethod
+    def _external_chat_url() -> str:
+        base = settings.external_llm_base_url.rstrip("/")
+        if not base:
+            raise ValueError("未配置 LINGJIAN_EXTERNAL_LLM_BASE_URL")
+        if base.endswith("/chat/completions"):
+            return base
+        return f"{base}/chat/completions"
+
+    def _chat_external(
+        self,
+        messages: list[dict[str, str]],
+        temperature: float,
+        *,
+        strict_json: bool = False,
+    ) -> str:
+        if not settings.external_llm_api_key:
+            raise ValueError("未配置 LINGJIAN_EXTERNAL_LLM_API_KEY")
+        if not settings.external_llm_model:
+            raise ValueError("未配置 LINGJIAN_EXTERNAL_LLM_MODEL")
+        import httpx
+
+        outbound_messages = messages
+        if strict_json:
+            outbound_messages = [
+                {
+                    "role": "system",
+                    "content": (
+                        "你是 JSON 修复器和结构化研判器。必须只输出一个合法 JSON 对象，"
+                        "不得输出 Markdown、代码围栏、解释文字或多个 JSON。"
+                    ),
+                },
+                *messages,
+                {
+                    "role": "user",
+                    "content": (
+                        "再次强调：请重新输出完整 JSON。必须包含 content_id、infer_time、risk_level、"
+                        "comprehensive_score、logical_fallacy、scientific_error、core_features、"
+                        "judgment_basis、why_sound、why_risky、reader_actions。"
+                        "不要省略任何字段，不要使用代码围栏。"
+                    ),
+                },
+            ]
+        payload: dict[str, Any] = {
+            "model": settings.external_llm_model,
+            "messages": outbound_messages,
+            "temperature": 0.01 if strict_json else temperature,
+            "top_p": 0.9,
+            "max_tokens": max(settings.llm_max_new_tokens, settings.external_llm_max_tokens),
+        }
+        if settings.external_llm_json_mode or strict_json:
+            payload["response_format"] = {"type": "json_object"}
+        headers = {
+            "Authorization": f"Bearer {settings.external_llm_api_key}",
+            "Content-Type": "application/json",
+        }
+        with httpx.Client(timeout=settings.external_llm_timeout_sec) as client:
+            response = client.post(self._external_chat_url(), headers=headers, json=payload)
+            response.raise_for_status()
+        body = response.json()
+        choices = body.get("choices")
+        if not isinstance(choices, list) or not choices:
+            raise ValueError("外部 LLM API 未返回 choices")
+        first = choices[0]
+        if isinstance(first, dict):
+            message = first.get("message")
+            if isinstance(message, dict) and message.get("content") is not None:
+                return str(message.get("content") or "")
+            if first.get("text") is not None:
+                return str(first.get("text") or "")
+        raise ValueError("外部 LLM API 响应格式无法识别")
 
     @staticmethod
     def _fallback(
@@ -419,40 +612,31 @@ class LlmService:
             system_prompt = resolve_system_prompt(
                 bundle, preferred_scene=preferred_prompt_scene
             )
-            scene_eff = (
-                (preferred_prompt_scene or "").strip().lower()
-                or _keyword_topic_scene(text, bert)
+            temp = float(self._runtime_temperature)
+            messages = self._build_messages(
+                text=text,
+                bert=bert,
+                content_id=content_id,
+                infer_time_str=infer_time_str,
+                system_prompt=system_prompt,
+                preferred_prompt_scene=preferred_prompt_scene,
             )
-            scene_block = (
-                f"\n\n【本轮研判场景】{scene_eff}\n"
-                "请据此撰写 scientific_error、why_sound、reader_actions，使其与正文主题一致：\n"
-                "- tech：以国家标准全文公开平台、工信部/市监公开通报、厂商技术文档、CVE/NVD、可重复测评方法或学术论文原文等为主；"
-                "禁止将 reader_actions 写成以「预约门诊、调整处方药、卫健委就诊」为主轴的纯医疗指南。\n"
-                "- medical / health：读者建议可包含卫健、疾控、药监、学会指南与正规医院就诊等路径。\n"
-                "- general：至少一条读者建议须为非医疗类权威求证路径，不得全部为药监门诊话术。\n"
-            )
+            if settings.llm_provider == "external":
+                raw = self._chat_external(messages, temp)
+                if not self._parse_json(raw):
+                    raw = self._chat_external(messages, temp, strict_json=True)
+                return self._result_from_raw(
+                    raw=raw,
+                    text=text,
+                    bert=bert,
+                    content_id=content_id,
+                    infer_time_str=infer_time_str,
+                )
 
             self._load()
             assert self._tokenizer is not None
             assert self._model is not None
             self._loaded_infer_key = desired_key
-            temp = float(self._runtime_temperature)
-            report = bert.model_dump()
-            messages = [
-                {"role": "system", "content": system_prompt},
-                {
-                    "role": "user",
-                    "content": (
-                        "【固定字段】（下列两项必须原样写入 JSON，不得改写）：\n"
-                        f'content_id: "{content_id}"\n'
-                        f'infer_time: "{infer_time_str}"\n\n'
-                        "请根据以下文本和 BERT 检测报告输出最终研判 JSON。\n"
-                        f"【文本】\n{text}\n\n【BERT报告】\n"
-                        f"{json.dumps(report, ensure_ascii=False)}"
-                        f"{scene_block}"
-                    ),
-                },
-            ]
             user_prompt = messages[1]["content"]
             if hasattr(self._model, "chat"):
                 raw, _history = self._model.chat(
@@ -476,64 +660,12 @@ class LlmService:
                 )
                 generated = outputs[0][inputs["input_ids"].shape[-1] :]
                 raw = self._tokenizer.decode(generated, skip_special_tokens=True)
-            data = self._parse_json(raw)
-            if not data:
-                return self._fallback(
-                    text,
-                    bert,
-                    "LLM 输出 JSON 解析失败",
-                    content_id=content_id,
-                    infer_time_str=infer_time_str,
-                )
-            features_list: list[str] = []
-            cf_raw = data.get("core_features")
-            if isinstance(cf_raw, list):
-                features_list = [str(x).strip() for x in cf_raw if str(x).strip()]
-            if not features_list:
-                fe = data.get("features")
-                if isinstance(fe, list):
-                    features_list = [str(x).strip() for x in fe if str(x).strip()]
-            features = features_list if features_list else list(bert.predicted_label_names)
-            logical_fallacy = str(data.get("logical_fallacy", "")).strip()
-            scientific_error = str(data.get("scientific_error", "")).strip()
-            judgment_basis = str(data.get("judgment_basis", "")).strip()
-            judgment_basis = re.sub(r"[；;]\s*阈值[:：]\s*[\d.]+\s*", "", judgment_basis)
-            judgment_basis = re.sub(r"\s*阈值[:：]\s*[\d.]+\s*", "", judgment_basis).strip()
-            judgment_basis = _strip_basis_noise_lines(judgment_basis)
-            if not judgment_basis:
-                judgment_basis = (
-                    "模型未返回完整判定说明；已结合 BERT 风险档位、命中标签与总分给出结构化结论，"
-                    "详见 prediction_summary_zh 与统计得分。"
-                )
-            why_sound = str(data.get("why_sound", "")).strip()
-            why_risky = str(data.get("why_risky", "")).strip()
-            reader_actions = str(data.get("reader_actions", "")).strip()
-            risk_internal = self._normalize_risk_level(data.get("risk_level", "未知"))
-            score_f = self._normalize_score(data.get("comprehensive_score"), bert.total_score_pct)
-            raw_canon = self._canonical_llm_json(
+            return self._result_from_raw(
+                raw=raw,
+                text=text,
+                bert=bert,
                 content_id=content_id,
                 infer_time_str=infer_time_str,
-                risk_normalized=risk_internal,
-                comprehensive_score=score_f,
-                logical_fallacy=logical_fallacy,
-                scientific_error=scientific_error,
-                core_features=features,
-                judgment_basis=judgment_basis,
-                why_sound=why_sound,
-                why_risky=why_risky,
-                reader_actions=reader_actions,
-            )
-            return LlmResult(
-                risk_level=risk_internal,
-                comprehensive_score=score_f,
-                judgment_basis=judgment_basis,
-                why_sound=why_sound,
-                why_risky=why_risky,
-                reader_actions=reader_actions,
-                features=features,
-                raw_output=raw_canon,
-                logical_fallacy=logical_fallacy,
-                scientific_error=scientific_error,
             )
         except Exception as exc:
             return self._fallback(

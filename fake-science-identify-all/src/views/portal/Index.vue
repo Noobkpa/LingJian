@@ -1,16 +1,25 @@
 <template>
   <div class="portal-page">
-    <div class="portal-bg" aria-hidden="true" />
-    <div class="portal-orb portal-orb--1" aria-hidden="true" />
-    <div class="portal-orb portal-orb--2" aria-hidden="true" />
+    <nav class="portal-nav" aria-label="门户导航">
+      <div class="brand-lockup">
+        <span class="brand-mark">灵</span>
+        <span class="brand-text">灵鉴</span>
+      </div>
+      <span class="nav-badge">Public Science Risk Platform</span>
+    </nav>
 
     <header class="portal-hero">
       <p class="portal-eyebrow">LingJian</p>
-      <h1 class="portal-title">灵鉴</h1>
-      <p class="portal-tagline">多模态伪科普内容 · 智能识别与研判</p>
+      <h1 class="portal-title">灵鉴伪科普内容识别平台</h1>
+      <p class="portal-tagline">多模态识别 · 结构化研判 · 人工复核协同</p>
       <p class="portal-lead">
-        OCR 提取 · BERT 初判 · 大模型综合输出 — 请选择身份进入对应子系统（新标签页打开）
+        面向公众、管理员与专业审核员的统一入口。请选择身份进入对应子系统，系统将在新标签页打开。
       </p>
+      <div class="portal-highlights" aria-label="平台能力">
+        <span>OCR 图文提取</span>
+        <span>BERT 风险初判</span>
+        <span>外部大模型研判</span>
+      </div>
     </header>
 
     <section class="portal-grid" aria-label="子系统入口">
@@ -25,9 +34,10 @@
         <div class="entry__icon" aria-hidden="true">
           <el-icon :size="40"><User /></el-icon>
         </div>
+        <p class="entry__kicker">Public Portal</p>
         <h2 class="entry__title">普通用户</h2>
         <p class="entry__text">上传文本 / 图片 / 图文，获取结构化研判与历史记录。</p>
-        <el-button type="primary" class="entry__btn" round @click.stop="goToSystem('user')">
+        <el-button type="primary" class="entry__btn" @click.stop="goToSystem('user')">
           进入用户端
         </el-button>
       </article>
@@ -43,9 +53,10 @@
         <div class="entry__icon" aria-hidden="true">
           <el-icon :size="40"><Setting /></el-icon>
         </div>
+        <p class="entry__kicker">Admin Console</p>
         <h2 class="entry__title">平台管理员</h2>
         <p class="entry__text">用户与权限、审核队列、数据统计与模型与系统配置。</p>
-        <el-button type="danger" class="entry__btn" round @click.stop="goToSystem('admin')">
+        <el-button type="danger" class="entry__btn" @click.stop="goToSystem('admin')">
           进入管理端
         </el-button>
       </article>
@@ -61,9 +72,10 @@
         <div class="entry__icon" aria-hidden="true">
           <el-icon :size="40"><DocumentChecked /></el-icon>
         </div>
+        <p class="entry__kicker">Review Workspace</p>
         <h2 class="entry__title">专业审核员</h2>
         <p class="entry__text">领取任务、查看 AI 辅助结论并提交复核意见。</p>
-        <el-button type="success" class="entry__btn" round @click.stop="goToSystem('audit')">
+        <el-button type="success" class="entry__btn" @click.stop="goToSystem('audit')">
           进入审核端
         </el-button>
       </article>
@@ -105,7 +117,7 @@ const goToSystem = (role) => {
   min-height: 100vh;
   width: 100%;
   overflow-x: hidden;
-  padding: clamp(2.5rem, 6vw, 4.5rem) clamp(1.25rem, 4vw, 2rem) 2.5rem;
+  padding: 1.5rem clamp(1.25rem, 4vw, 2rem) 2.5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -116,58 +128,69 @@ const goToSystem = (role) => {
     'PingFang SC',
     'Microsoft YaHei',
     sans-serif;
-  color: #3d3a36;
-}
-
-.portal-bg {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
+  color: #172033;
   background:
-    linear-gradient(180deg, #fdfcfa 0%, #f5f2ed 42%, #efeae3 100%);
+    linear-gradient(180deg, rgba(246, 251, 255, 0.96) 0%, rgba(255, 255, 255, 0.94) 56%, #f5f8fb 100%),
+    url('https://images.unsplash.com/photo-1581093458791-9d42e4e4dc46?auto=format&fit=crop&w=1800&q=80') center/cover fixed;
 }
 
-.portal-bg::before {
+.portal-page::before {
   content: '';
   position: absolute;
   inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(23, 123, 116, 0.06) 1px, transparent 1px),
+    linear-gradient(rgba(22, 119, 168, 0.05) 1px, transparent 1px);
+  background-size: 80px 80px;
   opacity: 0.45;
-  background-image: radial-gradient(circle at 1px 1px, rgba(120, 100, 80, 0.07) 1px, transparent 0);
-  background-size: 28px 28px;
-  pointer-events: none;
 }
 
-.portal-bg::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(115deg, transparent 40%, rgba(255, 255, 255, 0.65) 48%, transparent 56%);
-  pointer-events: none;
+.portal-nav {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 70rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  margin-bottom: clamp(2rem, 5vw, 3.5rem);
 }
 
-.portal-orb {
-  position: fixed;
-  border-radius: 50%;
-  filter: blur(72px);
-  opacity: 0.55;
-  pointer-events: none;
-  z-index: 0;
+.brand-lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
-.portal-orb--1 {
-  width: min(480px, 85vw);
-  height: min(480px, 85vw);
-  top: -8%;
-  right: -5%;
-  background: #d4e4f7;
+.brand-mark {
+  display: inline-flex;
+  width: 2.25rem;
+  height: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: #177b74;
+  color: #fff;
+  font-weight: 800;
+  box-shadow: 0 10px 24px rgba(23, 123, 116, 0.22);
 }
 
-.portal-orb--2 {
-  width: min(380px, 70vw);
-  height: min(380px, 70vw);
-  bottom: 5%;
-  left: -6%;
-  background: #e8e0d4;
+.brand-text {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #172033;
+}
+
+.nav-badge {
+  padding: 0.45rem 0.7rem;
+  border: 1px solid #d9e8ee;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.78);
+  color: #54707a;
+  font-size: 0.75rem;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -180,51 +203,69 @@ const goToSystem = (role) => {
   position: relative;
   z-index: 1;
   text-align: center;
-  max-width: 40rem;
-  margin-bottom: clamp(2rem, 5vw, 3.25rem);
+  max-width: 50rem;
+  margin-bottom: clamp(2rem, 5vw, 3rem);
 }
 
 .portal-eyebrow {
   margin: 0 0 0.5rem;
   font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.35em;
+  font-weight: 800;
+  letter-spacing: 0;
   text-transform: uppercase;
-  color: #8a8278;
+  color: #1677a8;
 }
 
 .portal-title {
-  margin: 0 0 0.35rem;
-  font-size: clamp(2.5rem, 7vw, 3.35rem);
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  color: #2c2825;
-  line-height: 1.15;
+  margin: 0 0 0.75rem;
+  font-size: clamp(2.25rem, 6vw, 4rem);
+  font-weight: 800;
+  letter-spacing: 0;
+  color: #13202b;
+  line-height: 1.12;
 }
 
 .portal-tagline {
   margin: 0 0 1rem;
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: #6b6560;
-  letter-spacing: 0.12em;
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  font-weight: 700;
+  color: #177b74;
+  letter-spacing: 0;
 }
 
 .portal-lead {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: 0.95rem;
   line-height: 1.75;
-  color: #7a736c;
-  max-width: 34rem;
+  color: #5c6b75;
+  max-width: 42rem;
   margin-left: auto;
   margin-right: auto;
+}
+
+.portal-highlights {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 1.4rem;
+}
+
+.portal-highlights span {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d8e9ee;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.82);
+  color: #3d6670;
+  font-size: 0.78rem;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
 }
 
 .portal-grid {
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 68rem;
+  max-width: 70rem;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: clamp(1.25rem, 2.5vw, 1.75rem);
@@ -232,18 +273,16 @@ const goToSystem = (role) => {
 
 .entry {
   position: relative;
-  padding: 2rem 1.5rem 1.65rem;
-  border-radius: 1.125rem;
+  padding: 1.75rem 1.5rem 1.5rem;
+  border-radius: 8px;
   cursor: pointer;
-  text-align: center;
+  text-align: left;
   outline: none;
-  background: rgba(255, 255, 255, 0.82);
-  border: 1px solid rgba(62, 56, 48, 0.08);
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid #e3edf2;
   box-shadow:
-    0 1px 2px rgba(62, 56, 48, 0.04),
-    0 12px 40px -12px rgba(62, 56, 48, 0.12);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 18px 48px -28px rgba(15, 23, 42, 0.24);
   transition:
     transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
     box-shadow 0.32s ease,
@@ -251,26 +290,26 @@ const goToSystem = (role) => {
 }
 
 .entry:focus-visible {
-  border-color: rgba(180, 160, 130, 0.55);
-  box-shadow: 0 0 0 3px rgba(200, 180, 150, 0.35);
+  border-color: rgba(22, 119, 168, 0.55);
+  box-shadow: 0 0 0 3px rgba(22, 119, 168, 0.16);
 }
 
 .entry:hover {
   transform: translateY(-5px);
-  border-color: rgba(62, 56, 48, 0.12);
+  border-color: rgba(22, 119, 168, 0.2);
   box-shadow:
-    0 2px 4px rgba(62, 56, 48, 0.06),
-    0 24px 48px -16px rgba(62, 56, 48, 0.14);
+    0 2px 4px rgba(15, 23, 42, 0.06),
+    0 26px 52px -22px rgba(15, 23, 42, 0.2);
 }
 
 .entry__accent {
   position: absolute;
   top: 0;
-  left: 1.25rem;
-  right: 1.25rem;
-  height: 3px;
-  border-radius: 0 0 4px 4px;
-  opacity: 0.85;
+  left: 0;
+  right: 0;
+  height: 4px;
+  border-radius: 8px 8px 0 0;
+  opacity: 1;
 }
 
 .entry--user .entry__accent {
@@ -284,15 +323,15 @@ const goToSystem = (role) => {
 }
 
 .entry__icon {
-  width: 4.25rem;
-  height: 4.25rem;
-  margin: 0 auto 1.25rem;
+  width: 3.75rem;
+  height: 3.75rem;
+  margin: 0 0 1.1rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
+  border-radius: 8px;
   color: #fff;
-  box-shadow: 0 8px 24px -6px rgba(62, 56, 48, 0.2);
+  box-shadow: 0 10px 24px -10px rgba(15, 23, 42, 0.32);
 }
 
 .entry--user .entry__icon {
@@ -305,19 +344,26 @@ const goToSystem = (role) => {
   background: linear-gradient(145deg, #5a9e6f, #3d7a52);
 }
 
+.entry__kicker {
+  margin: 0 0 0.35rem;
+  color: #7a8a94;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
 .entry__title {
   margin: 0 0 0.65rem;
   font-size: 1.15rem;
   font-weight: 700;
-  color: #2c2825;
-  letter-spacing: 0.06em;
+  color: #172033;
+  letter-spacing: 0;
 }
 
 .entry__text {
   margin: 0 0 1.35rem;
   font-size: 0.8125rem;
   line-height: 1.65;
-  color: #6b6560;
+  color: #60717c;
   min-height: 2.75em;
 }
 
@@ -325,6 +371,7 @@ const goToSystem = (role) => {
   width: 100%;
   max-width: 14rem;
   font-weight: 600;
+  border-radius: 6px;
 }
 
 .portal-foot {
@@ -333,7 +380,7 @@ const goToSystem = (role) => {
   margin-top: auto;
   padding-top: 2.75rem;
   font-size: 0.72rem;
-  color: #9a928a;
+  color: #80909a;
   text-align: center;
   line-height: 1.6;
 }
@@ -342,9 +389,9 @@ const goToSystem = (role) => {
   padding: 0.12rem 0.45rem;
   font-size: 0.68rem;
   font-family: ui-monospace, Consolas, monospace;
-  color: #5c5650;
+  color: #42606b;
   background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(62, 56, 48, 0.1);
+  border: 1px solid #d8e9ee;
   border-radius: 0.35rem;
 }
 
@@ -352,6 +399,12 @@ const goToSystem = (role) => {
   .portal-grid {
     grid-template-columns: 1fr;
     max-width: 22rem;
+  }
+
+  .portal-nav {
+    align-items: flex-start;
+    flex-direction: column;
+    margin-bottom: 2rem;
   }
 
   .entry__text {

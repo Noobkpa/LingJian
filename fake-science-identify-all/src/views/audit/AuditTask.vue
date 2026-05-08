@@ -50,7 +50,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuditStore } from '@/stores/audit/audit'
-import RiskTag from '@/components/RiskTag.vue'
+import RiskTag from '@/components/audit/RiskTag.vue'
 
 const router = useRouter()
 const auditStore = useAuditStore()

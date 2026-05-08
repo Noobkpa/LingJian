@@ -62,12 +62,33 @@ python backend\scripts\e2e_pipeline_http.py --skip-mixed
 | `LINGJIAN_BERT_CHECKPOINT` | `Bert/bert_chinese_multilabel_out/best` | BERT checkpoint |
 | `LINGJIAN_LLM_MODEL` | 若存在 `models/qwen/Qwen2.5-3B-Instruct` 则指向该目录，否则 `qwen/Qwen2.5-3B-Instruct` | HuggingFace 模型 id、或本地权重目录绝对路径 |
 | `LINGJIAN_ENABLE_LLM` | 若本地 `Qwen2.5-3B-Instruct` 目录存在则为 `1`，否则 `0` | 是否启用真实 LLM 推理 |
+| `LINGJIAN_LLM_PROVIDER` | `local` | `local` 走本地 Qwen，`external` 走 OpenAI-compatible 外部 API |
 | `LINGJIAN_LLM_ADAPTER` | （空） | LoRA 目录；存在 `adapter_model.safetensors`（或 `.bin`）时自动挂载到基座 |
 | `LINGJIAN_LLM_MAX_NEW_TOKENS` | `384` | 单次生成上限；过大易导致 `/analyze` 耗时很长 |
 | `LINGJIAN_LLM_QUANTIZATION` | `8bit` | GPU：`8bit`（bitsandbytes）或 `16bit`（fp16）；CPU 始终 float32。不兼容时改 `16bit` |
+| `LINGJIAN_EXTERNAL_LLM_BASE_URL` | `https://dashscope.aliyuncs.com/compatible-mode/v1` | 外部 LLM 的 OpenAI-compatible 基址 |
+| `LINGJIAN_EXTERNAL_LLM_API_KEY` | （空） | 外部 LLM 的 API Key |
+| `LINGJIAN_EXTERNAL_LLM_MODEL` | `qwen-plus` | 外部 LLM 模型名 |
+| `LINGJIAN_EXTERNAL_LLM_TIMEOUT` | `120` | 外部 API 超时时间（秒） |
+| `LINGJIAN_EXTERNAL_LLM_MAX_TOKENS` | `1024` | 外部 API 生成上限，避免结构化 JSON 被截断 |
+| `LINGJIAN_EXTERNAL_LLM_JSON_MODE` | `0` | 部分兼容接口支持时可开启 JSON mode |
 | `LINGJIAN_OCR_DEVICE` | `gpu` | PaddleOCR 设备，失败会自动尝试 CPU |
 
 当仓库内已放置 `models/qwen/Qwen2.5-3B-Instruct`（含 `config.json`）时，**默认启用真实 Qwen**，首次命中分析接口时会加载权重。无该目录时仍默认关闭，避免误拉 Hugging Face 大模型。临时关闭可设 `LINGJIAN_ENABLE_LLM=0`。
+
+### 外部 LLM API
+
+如果你想在阿里云 Ubuntu / 普通 CPU 服务器上跑完整流程，推荐改成外部 API：
+
+```env
+LINGJIAN_ENABLE_LLM=1
+LINGJIAN_LLM_PROVIDER=external
+LINGJIAN_EXTERNAL_LLM_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+LINGJIAN_EXTERNAL_LLM_API_KEY=你的百炼API_KEY
+LINGJIAN_EXTERNAL_LLM_MODEL=qwen-plus
+```
+
+这样后端不再依赖本地 `models/qwen/...` 大模型权重，只要网络能访问外部接口即可。
 
 ### LLM 权重放置
 
