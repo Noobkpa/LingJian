@@ -121,21 +121,47 @@
               </template>
             </el-table-column>
             <el-table-column prop="create_time" label="创建时间" width="180" />
-            <el-table-column label="操作" width="240" fixed="right">
+            <el-table-column label="操作" width="260" align="center">
               <template #default="{ row }">
-                <el-button size="small" class="table-action-btn" @click="handleEditPrompt(row)">编辑</el-button>
+                <div class="prompt-actions">
+                  <el-button size="small" @click.stop="handleEditPrompt(row)">编辑</el-button>
+                  <el-button
+                    size="small"
+                    :type="row.status === 1 ? 'warning' : 'success'"
+                    @click.stop="handleTogglePromptStatus(row)"
+                  >
+                    {{ row.status === 1 ? '禁用' : '启用' }}
+                  </el-button>
+                  <el-button size="small" type="primary" @click.stop="handleTestPrompt(row)">测试</el-button>
+                </div>
+              </template>
+            </el-table-column>
+          </el-table>
+
+          <div class="prompt-mobile-list">
+            <div v-for="row in promptList" :key="row.prompt_id" class="prompt-mobile-item">
+              <div class="prompt-mobile-main">
+                <strong>{{ row.prompt_name }}</strong>
+                <span>{{ sceneMap[row.prompt_scene] || row.prompt_scene }}</span>
+              </div>
+              <div class="prompt-actions">
                 <el-button
                   size="small"
-                  class="table-action-btn"
+                  @click.stop="handleEditPrompt(row)"
+                >
+                  编辑
+                </el-button>
+                <el-button
+                  size="small"
                   :type="row.status === 1 ? 'warning' : 'success'"
                   @click="handleTogglePromptStatus(row)"
                 >
                   {{ row.status === 1 ? '禁用' : '启用' }}
                 </el-button>
                 <el-button size="small" type="primary" @click="handleTestPrompt(row)">测试</el-button>
-              </template>
-            </el-table-column>
-          </el-table>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Prompt编辑弹窗 -->
@@ -492,5 +518,41 @@ onMounted(() => {
 }
 .prompt-dup-alert {
   margin-bottom: 16px;
+}
+.prompt-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 32px;
+}
+.prompt-actions :deep(.el-button) {
+  margin-left: 0;
+}
+.prompt-mobile-list {
+  display: none;
+}
+.prompt-mobile-item {
+  border: 1px solid #ebeef5;
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 10px;
+  background: #fff;
+}
+.prompt-mobile-main {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  color: #303133;
+}
+
+@media (max-width: 900px) {
+  .prompt-mobile-list {
+    display: block;
+  }
+  :deep(.el-table) {
+    display: none;
+  }
 }
 </style>
