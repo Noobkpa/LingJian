@@ -4,6 +4,7 @@ import { fileURLToPath, URL } from 'node:url'
 
 export default defineConfig({
   plugins: [vue()],
+  base: process.env.VITE_PUBLIC_BASE || '/',
   // 这里是@别名的核心配置，必须正确
   resolve: {
     alias: {
