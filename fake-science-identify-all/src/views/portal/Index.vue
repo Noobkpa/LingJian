@@ -91,9 +91,10 @@
 import { ElMessage } from 'element-plus'
 import { User, Setting, DocumentChecked } from '@element-plus/icons-vue'
 
-const userOrigin = import.meta.env.VITE_USER_APP_ORIGIN || 'http://127.0.0.1:3000'
-const adminOrigin = import.meta.env.VITE_ADMIN_APP_ORIGIN || 'http://127.0.0.1:3001'
-const auditOrigin = import.meta.env.VITE_AUDIT_APP_ORIGIN || 'http://127.0.0.1:3002'
+const sameSiteOrigin = window.location.origin
+const userOrigin = import.meta.env.VITE_USER_APP_ORIGIN || `${sameSiteOrigin}/user`
+const adminOrigin = import.meta.env.VITE_ADMIN_APP_ORIGIN || `${sameSiteOrigin}/admin`
+const auditOrigin = import.meta.env.VITE_AUDIT_APP_ORIGIN || `${sameSiteOrigin}/audit`
 
 const goToSystem = (role) => {
   const urlMap = {
