@@ -147,6 +147,57 @@ def _public_llm_reason_for_basis(reason: str | None) -> str:
     return head[:220] + ("…" if len(head) > 220 else "")
 
 
+_TEXT_EVIDENCE_MARKERS = (
+    "「",
+    "『",
+    "\"",
+    "'",
+    "声称",
+    "宣称",
+    "表示",
+    "提到",
+    "称",
+    "原文",
+    "文中",
+    "正文",
+    "所谓",
+    "内部",
+    "绝密",
+    "根治",
+    "治愈",
+    "防治",
+    "有效率",
+    "零副作用",
+    "100%",
+    "医生",
+    "专家",
+    "数据",
+)
+
+
+def _has_textual_evidence(*parts: str) -> bool:
+    text = " ".join(p for p in parts if p).strip()
+    if not text:
+        return False
+    if any(marker in text for marker in _TEXT_EVIDENCE_MARKERS):
+        return True
+    return len(text) >= 80 and ("BERT" not in text.upper())
+
+
+def _looks_bert_driven(*parts: str) -> bool:
+    text = " ".join(p for p in parts if p).strip()
+    if not text:
+        return False
+    upper = text.upper()
+    bert_hits = upper.count("BERT")
+    stat_words = sum(
+        1
+        for word in ("得分", "标签", "命中", "预测", "统计模型", "风险档", "总分")
+        if word in text
+    )
+    return bert_hits >= 1 and stat_words >= 2 and not _has_textual_evidence(text)
+
+
 class LlmService:
     def __init__(self) -> None:
         self._tokenizer = None
@@ -244,6 +295,85 @@ class LlmService:
         return json.dumps(payload, ensure_ascii=False)
 
     @staticmethod
+    def _calibrate_against_bert_overtrust(
+        *,
+        risk: str,
+        score: float,
+        logical_fallacy: str,
+        scientific_error: str,
+        features: list[str],
+        judgment_basis: str,
+        why_sound: str,
+        why_risky: str,
+    ) -> tuple[str, float, str, str, list[str], str, str, str]:
+        """Do not let an LLM adopt a high BERT score without textual evidence."""
+        highish = risk.startswith("高") or score >= 70.0
+        if not highish:
+            return (
+                risk,
+                score,
+                logical_fallacy,
+                scientific_error,
+                features,
+                judgment_basis,
+                why_sound,
+                why_risky,
+            )
+        evidence_ok = _has_textual_evidence(
+            judgment_basis,
+            why_risky,
+            logical_fallacy,
+            scientific_error,
+        )
+        bert_driven = _looks_bert_driven(judgment_basis, why_risky, logical_fallacy, scientific_error)
+        if evidence_ok and not bert_driven:
+            return (
+                risk,
+                score,
+                logical_fallacy,
+                scientific_error,
+                features,
+                judgment_basis,
+                why_sound,
+                why_risky,
+            )
+
+        calibrated_risk = "中风险" if risk.startswith("高") else risk
+        calibrated_score = min(score, 69.0)
+        if calibrated_score < 45.0:
+            calibrated_score = 45.0
+        note = (
+            "BERT 提示存在风险信号，但模型输出未能指出足够明确的原文证据；"
+            "本次已按文本证据优先原则下调，需进一步人工核对关键论断。"
+        )
+        if not judgment_basis or bert_driven:
+            judgment_basis = note
+        elif "文本证据优先" not in judgment_basis:
+            judgment_basis = f"{judgment_basis}；{note}"
+        if not why_sound:
+            why_sound = (
+                "BERT 标签反映的是统计相似性，不能替代对原文事实、出处和论证链条的核验；"
+                "当模型未指出具体可疑句时，不宜仅凭分数作高风险定性。"
+            )
+        if not why_risky or bert_driven:
+            why_risky = (
+                "当前主要风险来自统计模型预警，而非已经被大模型明确定位的原文断言；"
+                "请优先复核正文是否存在疗效承诺、伪造权威、数据夸大或异常煽动表达。"
+            )
+        if risk.startswith("高") and features:
+            features = [f for f in features if str(f).strip()]
+        return (
+            calibrated_risk,
+            round(calibrated_score, 1),
+            logical_fallacy,
+            scientific_error,
+            features,
+            judgment_basis,
+            why_sound,
+            why_risky,
+        )
+
+    @staticmethod
     def _build_messages(
         *,
         text: str,
@@ -333,6 +463,25 @@ class LlmService:
         reader_actions = str(data.get("reader_actions", "")).strip()
         risk_internal = self._normalize_risk_level(data.get("risk_level", "未知"))
         score_f = self._normalize_score(data.get("comprehensive_score"), bert.total_score_pct)
+        (
+            risk_internal,
+            score_f,
+            logical_fallacy,
+            scientific_error,
+            features,
+            judgment_basis,
+            why_sound,
+            why_risky,
+        ) = self._calibrate_against_bert_overtrust(
+            risk=risk_internal,
+            score=score_f,
+            logical_fallacy=logical_fallacy,
+            scientific_error=scientific_error,
+            features=features,
+            judgment_basis=judgment_basis,
+            why_sound=why_sound,
+            why_risky=why_risky,
+        )
         raw_canon = self._canonical_llm_json(
             content_id=content_id,
             infer_time_str=infer_time_str,
