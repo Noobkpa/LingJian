@@ -17,8 +17,8 @@ function mapMeToAuditUser(u) {
     nickname: u.nickname || '',
     phone: u.phone || '',
     join_time: joinTime,
-    roles: [],
-    role_label: '用户',
+    roles: ['reviewer'],
+    role_label: '审核员',
     audit_count: 0,
     accuracy_display: '100%'
   }

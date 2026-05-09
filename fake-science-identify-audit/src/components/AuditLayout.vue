@@ -33,7 +33,7 @@
           <h3 class="page-title">{{ currentTitle }}</h3>
         </div>
         <div class="header-right">
-          <span class="user-name">{{ userInfo.real_name }} ({{ userInfo.level }})</span>
+          <span class="user-name">{{ displayName }}（{{ roleLabel }}）</span>
           <el-button type="text" @click="handleLogout">退出登录</el-button>
         </div>
       </header>
@@ -61,6 +61,18 @@ const userStore = useUserStore()
 const activePath = computed(() => route.path)
 const currentTitle = computed(() => route.meta.title?.split(' - ')[0] || '')
 const userInfo = computed(() => userStore.userInfo)
+const displayName = computed(() => (
+  userInfo.value.nickname ||
+  userInfo.value.username ||
+  '审核员'
+))
+const roleLabel = computed(() => {
+  const label = userInfo.value.role_label
+  if (label) return label
+  const roles = userInfo.value.roles || []
+  if (roles.includes('reviewer')) return '审核员'
+  return '审核员'
+})
 
 // 退出登录
 const handleLogout = () => {
