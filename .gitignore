@@ -40,7 +40,7 @@ fake-science-identify-admin/.env.development.local
 fake-science-identify-audit/.env.development.local
 
 # Large model artifacts
-models/
+/models/
 LLM/output/
 *.safetensors
 *.pt
